@@ -254,7 +254,18 @@ def is_matching_date(timestamp_str, target_date):
 
 # Fetch and sort rows chronologically from day start to end
 def fetch_sorted_timeline_data(target_date):
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    creds = None
+    try:
+        if hasattr(st, "secrets") and "gcp_service_account" in st.secrets:
+            creds = Credentials.from_service_account_info(
+                dict(st.secrets["gcp_service_account"]), scopes=SCOPES
+            )
+    except Exception:
+        creds = None
+
+    if creds is None:
+        creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+
     client = gspread.authorize(creds)
     sheet = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
     all_values = sheet.get_all_values()
